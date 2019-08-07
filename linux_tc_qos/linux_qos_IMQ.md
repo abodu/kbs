@@ -19,4 +19,21 @@ IMQ就是用来解决上述两个局限的。
 
 ifb 是基于 IMQ, 并移除了 IMQ 依赖于 netfilter的缺点。其原理如下图：
 
-![1565157716734](asserts/1565157716734.png)
+![1565157716734](assets/1565157716734.png)
+
+ifb 范例
+
+```bash
+
+# 用ingress qdisc和ifb做ingress方向的队列调度。
+
+modprobe ifb
+
+ip link set dev ifb0 up txqueuelen 1000
+
+tc qdisc add dev eth1 ingress
+
+tc filter add dev eth1 parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
+
+tc qdisc add dev ifb0 root netem delay 50ms loss 1%
+```
