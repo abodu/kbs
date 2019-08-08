@@ -275,9 +275,7 @@ policing 和 shaping 都是 Linux 流量控制中的基本组件，两者都可�
 
 - **HTB(分层令牌桶)**
 
-- ![htb-class](assets/htb-class_thumb.png)
-
-  ![htb-borrow](assets/htb-borrow_thumb1.png)
+  ![htb-class](assets/htb-class_thumb.png)
   
   此图中有多个 HTB 根分类，每一个根分类都可以模拟成一条虚电路。
 
