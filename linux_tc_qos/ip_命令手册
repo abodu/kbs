@@ -1,2 +1,335 @@
-![iproute2](assets/iproute2.png)
+# iproute2
 
+  ![iproute2](assets/iproute2.png)
+
+linux 高级路由即基于策略的路由比传统路由在功能上更强大，使用也更灵活。
+它不仅能够根据目的地址来转发路径而且也能够根据报文大小、应用或ip源地址来选择路由转发路径从而让系统管理员能轻松做到：
+
+- 管制某台计算机的带宽。
+- 管制通向某台计算机的带宽
+- 帮助你公平地共享带宽
+- 保护你的网络不受DOS的攻击
+- 保护你的Internet不受到你的客户的攻击
+- 把多台服务器虚拟成一台，并进行负载均衡或者提高可用性
+- 限制你的用户访问某些计算机
+- 限制对你的计算机的访问
+- 基于用户帐号、MAC地址、源IP地址、端口、QOS《TOS》、时间或者content等进行路由
+
+
+**一、高级路由的基础IP ROUTE2**基本命令：
+ip link list 显示ip链路状态信息
+ip address show 除显示所有网络地址
+ip route show 显示主路由表信息
+ip neigh show 显示邻居表
+linux系统路由表
+linux可以自定义从1－252个路由表，
+linux系统维护了4个路由表：
+0#表 系统保留表
+253#表 defulte table 没特别指定的默认路由都放在改表
+254#表 main table 没指明路由表的所有路由放在该表
+255#表 locale table 保存本地接口地址，广播地址、NAT地址 由系统维护，用户不得更改
+路由表的查看可有以下二种方法：
+      ip route list table table_number
+      ip route list table table_name
+路由表序号和表名的对应关系在/etc/iproute2/rt_tables中，可手动编辑
+路由表添加完毕即时生效，下面为实例
+ip route add default via 192.168.1.1 table 1 在一号表中添加默认路由为192.168.1.1
+ip route add 192.168.0.0/24 via 192.168.1.2 table 1 在一号表中添加一条到192.168.0.0网段的路由为192.168.1.2
+注:各路由表中应当指明默认路由,尽量不回查路由表.路由添加完毕,即可在路由规则中应用.
+
+
+**二、高级路由重点之一路由规则 ip rule**进行路由时，根据路由规则来进行匹配，按优先级（pref）从低到高匹配,直到找到合适的规则.所以在应用中配置默认路由是必要的..     
+ip rule show 显示路由规则
+路由规则的添加
+ip rule add from 192.168.1.10/32 table 1 pref 100
+如果pref值不指定，则将在已有规则最小序号前插入
+注：创建完路由规则若需立即生效须执行#ip route flush cache;刷新路由缓冲
+    可参数解析如下：   &n
+        From -- 源地址
+        To -- 目的地址（这里是选择规则时使用，查找路由表时也使用）
+　　    Tos -- IP包头的TOS（type of sevice）域Linux高级路由-
+　　    Dev -- 物理接口
+　    　Fwmark -- iptables标签
+    采取的动作除了指定路由表外，还可以指定下面的动作：
+        Table 指明所使用的表
+  　    Nat 透明网关
+
+　　    Prohibit 丢弃该包，并发送 COMM.ADM.PROHIITED的ICMP信息 
+　　    Reject 单纯丢弃该包
+　　    Unreachable丢弃该包， 并发送 NET UNREACHABLE的ICMP信息
+    具体格式如下：更强大，使用更灵活，它使网络管理员不仅能
+        Usage: ip rule [ list | add | del ] SELECTOR ACTION
+        SELECTOR := [ from PREFIX ] [ to PREFIX ] [ tos TOS ][ dev STRING ] [ pref NUMBER ]
+        ACTION := [ table TABLE_ID ] [ nat ADDRESS ][ prohibit | reject | unreachable ]
+                  [ flowid CLASSID ]
+        TABLE_ID := [ local | main | default | new | NUMBER ]
+
+**1.策略路由**     基于策略的路由比传统路由在功能上更强大，使用更灵活，它使网络管理员不仅能够根据目的地址而且能够根据报文大小、应用或IP源地址来选择转发路径...         
+    \#/etc/iproute2/rt_tables 此文件存有linux 系统路由表默认表有255 254 253三张表 
+      255  local 本地路由表存有本地接口地址，广播地址，已及NAT地址. 
+           local表由系统自动维护..管理员不能操作此表... 
+      254  main 主路由表 传统路由表,ip route若没指定表亦操作表254.一般存所有的路由.. 
+           注:平时用ip ro sh查看的亦是此表设置的路由. 
+      253  default  默认路由表一般存放默认路由... 
+           注：rt_tables文件中表以数字来区分表0保留最多支持255张表 
+    路由表的查看可有以下二种方法： 
+      \#ip route list table table_number
+
+​      \#ip route list table table_name
+
+​    路由表添加完毕,即可在策略路由表内添加路由例:
+
+​      \#ip route add 192.168.1.0/24 dev eth0 via 192.168.1.66 realm 4
+
+​        注:发往子网192.168.1.0/24的数据包通过分类4转发配合tc使用,后文有介绍讲解...
+
+​      \#ip route add default via 192.168.1.1 table int1
+
+​      \#ip route add 192.168.1.0/24 via 192.168.1.1 table int2
+
+​      \#ip route add 172.16.0.2/16 via 172.16.0.1 table int3
+
+        注:各路由表中应当指明默认路由,尽量不回查路由表.路由添加完毕,即可在路由规则中应用.. 
+    #ip rule sh 显示路由规则 
+      0:      from all lookup local 
+      32766:  from all lookup main 
+      32767:  from all lookup default 
+    进行路由时，正是根据路由规则来进行匹配，按优先级(pref后数值)从低到高匹配,直到找到合适的规则.所以在应用中配置默认路由是必要的..     
+    策略路由一般手工添加路由表，路由表的添加只需编辑rt_tables文件，规定表序号，表名即可.. 
+    ip rule规则添加示例： 
+      #ip rule add from 192.168.1.112/32 [tos 0x10] table test2 pref 999 prohibit 
+      #ip rule add to 192.168.1.2 pref 1000 table test1 
+      #ip rule add from 192.168.1.0/24 pref 1001 table test1 
+      #ip rule add [from 0/0] table test1 pref 1003 
+      #ip rule add fwmark 1 pref 1002 table test2  此句型配合iptables -t mangle应用.如先对数据
+
+  包作标记:
+
+​      \#iptables -t mangle -A PREROUTING -p tcp -m multiport
+
+​                             --dports 80,8080,20,21 -s 192.168.1.0/24 -j MARK --set-mark 1    
+​        注：创建完路由规则若需立即生效须执行#ip route flush cache;刷新路由缓冲 
+​    可参数解析如下： 
+​        From -- 源地址 
+​        To -- 目的地址（这里是选择规则时使用，查找路由表时也使用） 
+​    Tos -- IP包头的TOS（type of sevice）域 
+​    Dev -- 物理接口 
+​    　Fwmark -- 防火墙参数 
+​    采取的动作除了指定路由表外，还可以指定下面的动作： 
+​        Table 指明所使用的表 
+  　    Nat 透明网关
+
+​    Prohibit 丢弃该包，并发送 COMM.ADM.PROHIITED的ICMP信息 
+​    Reject 单纯丢弃该包 
+​    Unreachable丢弃该包， 并发送 NET UNREACHABLE的ICMP信息 
+​    具体格式如下： 
+​        Usage: ip rule [ list | add | del ] SELECTOR ACTION 
+​        SELECTOR := [ from PREFIX ] [ to PREFIX ] [ tos TOS ][ dev STRING ] [ pref NUMBER ] 
+​        ACTION := [ table TABLE_ID ] [ nat ADDRESS ][ prohibit | reject | unreachable ] 
+​                  [ flowid CLASSID ] 
+​        TABLE_ID := [ local | main | default | new | NUMBER ]
+
+ 
+
+  **2.网卡捆绑(网关linux+多网卡)**
+
+​    \#modprobe bonding mod=1 miimon=200 primary=eth1 创建bond0,模式为1,主网卡eth1..
+
+​    \#ip addr add dev bond$ 10.0.0.1/24 设置bond0的IP
+
+​    \#ifenslave bond0 eth1 eth2 添加绑定的dev
+
+​      注:mode=0 轮转均衡(默认模式),此模式MAC频繁切换导致交换机负载大..
+
+​         mode=1 主备模式 用primary指定网卡
+
+​         mode=4 常用 802.3ad模式,动态链路采集模式.此模式要求SWITCH捆绑..
+
+​         miimon=ms 每隔多少毫秒查询链路是否有效.
+
+​      其它参数如:
+
+​         arp_interval=ms
+
+​         arp_ip_target=*.*.*.*
+
+ 
+
+​    另一种网卡捆绑固化方式:
+
+​      \#vi /etc/modules.conf 加入以下行
+
+​    　　alias bond0 bonding
+
+​        系统在启动时加载bonding模块，对外虚拟网络接口设备为 bond0..
+
+​      \#cd /etc/sysconfig/network-scripts
+
+​      \#vi ifcfg-bond0
+
+​        DEVICE=bond0 
+​        IPADDR=11.0.0.1 
+​        NETMASK=255.0.0.0 
+​        NETWORK=192.168.1.0 
+​        BROADCAST=192.168.1.255 
+​       \>         BOOTPROTO=none 
+​        USERCTL=no
+
+​      \#vi ifcfg-eth0  
+​        DEVICE=eth0 
+​        USERCTL=no 
+​       \>         MASTER=bond0 
+​        SLAVE=yes 
+​        BOOTPROTO=none
+
+​      \#vi ifcfg-eth1 
+​        DEVICE=eth0 
+​        USERCTL=no 
+​       \>         MASTER=bond0 
+​        SLAVE=yes 
+​        BOOTPROTO=none
+
+​     \#/etc/init.d/network restart 重启网络服务验证网卡的配置信息备份网卡被加上了NOARP标记
+
+​     \#cat /proc/net/bond0/info 查看bond信息
+
+ 
+
+  **3.网桥(Linux+多网卡)**
+
+​    配置工具 brctl http://bridge.sourceforge.net/  源码包名:bridge-utils-*形式
+
+​    安装第一步:autoconf 后类同于源码包安装..
+
+​    例.linu+二网卡eth0 eth1 配置成网桥
+
+​      配置前去除加入网桥的eth0 eth1的IP
+
+​      \#ifconfig eth0/eth1 down
+
+​      \#ifconfig eth0/eth1 0.0.0.0 up
+
+​      \#brctl addbr br0
+
+​      \#brctl addif br0 eth0 eth1
+
+​      \#ip li set dev br0 up
+
+​      \#brctl showmacs br0 显示网桥MAC 
+​    撤网桥:
+
+​      \#ip li set dev br0 down
+
+​      \#brctl delif br0 eth0 eth1
+
+​      \#brctl delbr br0
+
+​    网桥接口处亦可进行流量控制,无Ip的linux网桥可有效防御外界的功击,对linux网桥机的总控安全性高...
+
+ 
+
+​    贴上一篇网桥应用实例,此实例是网桥的一种扩张应用...
+
+​      脚本名:start_bridge.sh
+
+​      \#!/bin/sh
+
+​      brctl addbr net1 
+​      brctl addif net1 eth0 
+​      ifconfig eth0 down 
+​      ifconfig eth0 0.0.0.0 up 
+​      ifconfig net1 192.168.5.1 up 
+​      \#ip ro del 192.168.1.0/24 dev eth1  proto kernel  scope link  src 192.168.1.28
+
+​      ip ro del 192.168.1.0/24 
+​      \#route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.5.2
+
+​      ip route add default via 192.168.5.2 
+​      echo "1" > /proc/sys/net/ipv4/ip_forward
+
+ 
+
+  Linux高级路由需结合iptables才能充分体现其功能的强大,实际工作中的应用多半基于此,当然要熟练掌握Linux高级路由+iptables 还需进一步的加强学习和实践的应用...
+
+
+
+ 
+
+ 
+
+\--------------------------------------------------------------
+
+ip rule
+
+IP基本命令：
+ip link list 显示ip链路状态信息
+ip address show 除显示所有网络地址
+ip route show 显示主路由表信息
+ip neigh show 显示邻居表
+linux系统路由表
+linux可以自定义从1－252个路由表，
+linux系统维护了4个路由表：
+0#表 系统保留表
+253#表 defulte table 没特别指定的默认路由都放在改表
+254#表 main table 没指明路由表的所有路由放在该表
+255#表 locale table 保存本地接口地址，广播地址、NAT地址 由系统维护，用户不得更改
+路由表的查看可有以下二种方法：
+ip route list table table_number
+ip route list table table_name
+路由表序号和表名的对应关系在/etc/iproute2/rt_tables中，可手动编辑
+路由表添加完毕即时生效，下面为实例
+ip route add default via 192.168.1.1 table 1 在一号表中添加默认路由为192.168.1.1
+ip route add 192.168.0.0/24 via 192.168.1.2 table 1 在一号表中添加一条到192.168.0.0网段的路由为192.168.1.2
+注:各路由表中应当指明默认路由,尽量不回查路由表.路由添加完毕,即可在路由规则中应用.
+
+
+**二、高级路由重点之一路由规则 ip rule**进行路由时，根据路由规则来进行匹配，按优先级（pref）从低到高匹配,直到找到合适的规则.所以在应用中配置默认路由是必要的..
+ip rule show 显示路由规则
+路由规则的添加
+ip rule add from 192.168.1.10/32 table 1 pref 100
+如果pref值不指定，则将在已有规则最小序号前插入
+注：创建完路由规则若需立即生效须执行#ip route flush cache;刷新路由缓冲
+可参数解析如下： &n
+From — 源地址
+To — 目的地址（这里是选择规则时使用，查找路由表时也使用）
+　　 Tos — IP包头的TOS（type of sevice）域Linux高级路由-
+　　 Dev — 物理接口
+　 　Fwmark — iptables标签
+采取的动作除了指定路由表外，还可以指定下面的动作：
+Table 指明所使用的表
+　 Nat 透明网关
+
+　　 Prohibit 丢弃该包，并发送 COMM.ADM.PROHIITED的ICMP信息
+　　 Reject 单纯丢弃该包
+　　 Unreachable丢弃该包， 并发送 NET UNREACHABLE的ICMP信息
+具体格式如下：更强大，使用更灵活，它使网络管理员不仅能
+Usage: ip rule [ list | add | del ] SELECTOR ACTION
+SELECTOR := [ from PREFIX ] [ to PREFIX ] [ tos TOS ][ dev STRING ] [ pref NUMBER ]
+ACTION := [ table TABLE_ID ] [ nat ADDRESS ][ prohibit | reject | unreachable ]
+[ flowid CLASSID ]
+TABLE_ID := [ local | main | default | new | NUMBER ]
+ip ruel 配置实例：
+ip route del default
+ip route add default via 192.168.33.1
+ip rule add from 192.168.2.6 pref 1000 lookup cnline
+ip rule add from 192.168.2.4 pref 1000 lookup cnline
+ip rule add from 192.168.2.32 pref 1000 lookup cnline
+ip rule add from 192.168.2.227 pref 1000 lookup cnline
+ip rule add from 192.168.2.100 pref 1000 lookup cnline
+ip rule add from 192.168.2.101 pref 1000 lookup cnline
+ip rule add from 192.168.2.107 pref 1000 lookup cnline
+ip rule add from 192.168.2.55 pref 1000 lookup cnline
+ip rule add from 192.168.2.56 pref 1000 lookup cnline
+ip rule add from 192.168.2.189 pref 1000 lookup cnline
+ip rule add from 192.168.2.190 pref 1000 lookup cnline
+ip rule add from 192.168.2.191 pref 1000 lookup cnline
+ip rule add from 192.168.2.192 pref 1000 lookup cnline
+ip rule add from 192.168.2.193 pref 1000 lookup cnline
+ip rule add from 192.168.2.194 pref 1000 lookup cnline
+ip rule add from 192.168.2.195 pref 1000 lookup cnline
+ip rule add from 192.168.2.196 pref 1000 lookup cnline
+ip rule add from 192.168.2.197 pref 1000 lookup cnline
+ip rule add from 192.168.2.198 pref 1000 lookup cnline
+\#ip route add 192.168.0.0/24 via 192.168.33.1 table cnline
+ip route add 58.14.0.0/15 via 192.168.33.1 table cnline
+ip route add 58.16.0.0/16 via 192.168.33.1 table cnline
