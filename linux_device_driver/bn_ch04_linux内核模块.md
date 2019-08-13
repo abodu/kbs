@@ -100,9 +100,9 @@ module_param(book_num, int, S_IRUGO);
 
 > 如果模块被内置，就无法insmod了，但是 `bootloader`  可以通过在bootargs里设置“`模块名.参数名=值`”的形式给该内置的模块传递参数。
 
-参数类型可以是 `byte、short、ushort、int、uint、long、ulong、charp（字符指针）、bool或invbool（布尔的反）`，在模块被编译时会将module_param中声明的类型与变量定义的类型进行比较，判断是否一致。 
+参数类型可以是 `byte、short、ushort、int、uint、long、ulong、charp（字符指针）、bool或invbool（布尔的反）`，在模块被编译时会将module_param中声明的类型与变量定义的类型进行比较，判断是否一致。
 
-除此之外，模块也可以拥有参数数组，形式为“`module_param_array（数组名，数组类型，数组长，参数读/写权限）`” 。 
+除此之外，模块也可以拥有参数数组，形式为“`module_param_array（数组名，数组类型，数组长，参数读/写权限）`” 。
 
 模块被加载后，在 `/sys/module/` 目录下将出现以此模块名命名的目录。
 
