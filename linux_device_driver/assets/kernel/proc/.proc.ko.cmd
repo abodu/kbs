@@ -1,1 +1,0 @@
-cmd_/home/baohua/develop/training/kernel/proc/proc.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/baohua/develop/training/kernel/proc/proc.ko /home/baohua/develop/training/kernel/proc/proc.o /home/baohua/develop/training/kernel/proc/proc.mod.o
