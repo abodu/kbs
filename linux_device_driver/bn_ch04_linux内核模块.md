@@ -212,20 +212,17 @@ ifdef HC_CTP
 MAKE := make CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64
 endif
 
-# Kernel modules
-
-MOD_SRCS:=hc_hello.c
-#指定驱动模块的名字
-# 注意：驱动模块的名字 千万 不能和本文件夹内的任何源文件同名！
+# WHAT_YOU_NEED_TO_CHANGED
+#指定驱动模块的名字，注意：驱动模块的名字千万不能和本文件夹内的任何源文件同名！
 MOD_NAME := hello
+#指定驱动模块的所有依赖源文件
+MOD_SRCS := hc_hello.c
 
-#$(MOD_NAME)-objs := 指定驱动模块的所有依赖文件
+#最终由XXX-objs链接生成$(MOD_NAME).o ，再生成$(MOD_NAME).ko
 $(MOD_NAME)-objs := $(MOD_SRCS:.c=.o)
-
-#最终由$(MOD_NAME)-objs链接生成$(MOD_NAME).o ，再生成$(MOD_NAME).ko
 obj-m += $(MOD_NAME).o
 
-# Specify flags for the module compilation.
+# 模块编译额外FLAG, 放开后将以【完全不优化】模式编译模块
 # EXTRA_CFLAGS = -g -O0
 
 build: modules
@@ -233,7 +230,6 @@ modules clean:
 	$(MAKE) -C $(KSRCDIR) M=$(CURDIR) $@
 help:
 	@echo -e '\n[HC_KSD=/path/to/kernel/srcdir] [HC_CTP=1] make [{build|clean}]\n'
-
 ```
 
 该Makefile文件应该与源代码hello.c位于同一目录，开启其中的EXTRA_CFLAGS=-g-O0，可以得到包含调试信息的hello.ko模块.
