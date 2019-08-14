@@ -140,10 +140,93 @@ MODULE_LICENSE("GPL v2");
 
 ## 4.7 模块声明与描述
 
+在Linux内核模块中，我们可以用MODULE_AUTHOR、MODULE_DESCRIPTION、MODULE_VERSION、MODULE_DEVICE_TABLE、MODULE_ALIAS分别声明模块的作者、描述、版本、设备表和别名，例如： 
+
+```c
+MODULE_AUTHOR(author);
+MODULE_DESCRIPTION(description);
+MODULE_VERSION(version_string);
+MODULE_DEVICE_TABLE(table_info);
+MODULE_ALIAS(alternate_name);
+```
+
+对于USB、PCI等设备驱动，通常会创建一个MODULE_DEVICE_TABLE，以表明该驱动模块所支持的设备:
+
+```c
+/* table of devices that work with this driver */
+static struct usb_device_id skel_table [] = {
+	{ USB_DEVICE(USB_SKEL_VENDOR_ID,USB_SKEL_PRODUCT_ID) },
+	{ } /* terminating enttry */
+};
+MODULE_DEVICE_TABLE (usb, skel_table);
+```
+
 ## 4.8 模块的使用计数
+
+Linux 2.6以后的内核提供了模块计数管理接口 `try_module_get（&module）`和 `module_put（&module）`
+
+```c
+//函数用于增加模块使用计数；若返回为0，表示调用失败，希望使用的模块没有被加载或正在被卸载中。
+int try_module_get(struct module *module);
+
+//该函数用于减少模块使用计数。
+void module_put(struct module *module);
+```
+
+Linux 2.6以后的内核为不同类型的设备定义了`struct module* owner`域，用来指向管理此设备的模块。
+
+- 当开始使用某个设备时，内核使用 `try_module_get（dev->owner）`去增加管理此设备的owner模块的使用计数；
+- 当不再使用此设备时，内核使用  `module_put（dev->owner）`减少对管理此设备的管理模块的使用计数。
+
+这样，当设备在使用时，管理此设备的模块将不能被卸载。只有当设备不再被使用时，模块才允许被卸载。
+
+在Linux 2.6以后的内核下，对于设备驱动而言，很少需要亲自调用try_module_get（）与 module_put（）。
 
 ## 4.9 模块的编译
 
-## 4.10 使用模块“绕开” `GPL`
+Linux内核模块在编译的时候可以通过命令编译：
+```bash
+make -C 内核源码绝对路径 M=模块源码文件所在的绝对路径 modules  
 
-## 4.11 总结
+#此命令的解释：
+#1）进入到内核源码目录
+#2）读取内核源码目录的Makefile
+#3）执行内核源码Makefile中的 modules 目标
+#4）根据 modules 目标的命令编译M所指向的文件路径 Makefile指定 的 C 文件
+```
+
+因此有如下的 编译模块所需的 Makefile 文件模板：
+
+```makefile
+KVERS := $(shell uname -r)
+#若定义了HC_KSD变量, 则以HC_KSD的取值替换默认的linux内核代码路径(/lib/modules/$(KVERS)/build)
+KSRCDIR = /lib/modules/$(KVERS)/build
+ifdef HC_KSD
+KSRCDIR := $(HC_KSD)
+endif
+
+MAKE = make #代码默认不进行交叉编译
+#若定义了HC_CTP变量, 则使用【aarch64-linux-gnu-】交叉编译工具链交叉编译到arm64上
+ifdef HC_CTP
+MAKE := make CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64
+endif
+
+# Kernel modules
+MOD_SRCS:=hello.c
+obj-m += $(MOD_SRCS:.c=.o)
+
+# Specify flags for the module compilation.
+# EXTRA_CFLAGS = -g -O0
+
+build: modules
+modules clean:
+	$(MAKE) -C $(KSRCDIR) M=$(CURDIR) $@
+help:
+	@echo -e '\n[HC_KSD=/path/to/kernel/srcdir] [HC_CTP=1] make [{build|clean}]\n'
+
+```
+
+该Makefile文件应该与源代码hello.c位于同一目录，开启其中的EXTRA_CFLAGS=-g-O0，可以得到包含调试信息的hello.ko模块.
+
+>**`内核用EXPORT_SYMBOL_GPL（）导出的符号是不可以被非GPL模块引用的`**。
+
