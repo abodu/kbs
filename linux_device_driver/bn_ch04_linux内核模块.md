@@ -140,7 +140,7 @@ MODULE_LICENSE("GPL v2");
 
 ## 4.7 模块声明与描述
 
-在Linux内核模块中，我们可以用MODULE_AUTHOR、MODULE_DESCRIPTION、MODULE_VERSION、MODULE_DEVICE_TABLE、MODULE_ALIAS分别声明模块的作者、描述、版本、设备表和别名，例如： 
+在Linux内核模块中，我们可以用MODULE_AUTHOR、MODULE_DESCRIPTION、MODULE_VERSION、MODULE_DEVICE_TABLE、MODULE_ALIAS分别声明模块的作者、描述、版本、设备表和别名，例如：
 
 ```c
 MODULE_AUTHOR(author);
@@ -155,8 +155,8 @@ MODULE_ALIAS(alternate_name);
 ```c
 /* table of devices that work with this driver */
 static struct usb_device_id skel_table [] = {
-	{ USB_DEVICE(USB_SKEL_VENDOR_ID,USB_SKEL_PRODUCT_ID) },
-	{ } /* terminating enttry */
+    { USB_DEVICE(USB_SKEL_VENDOR_ID,USB_SKEL_PRODUCT_ID) },
+    { } /* terminating enttry */
 };
 MODULE_DEVICE_TABLE (usb, skel_table);
 ```
@@ -184,7 +184,8 @@ Linux 2.6以后的内核为不同类型的设备定义了`struct module* owner`�
 
 ## 4.9 模块的编译
 
-Linux内核模块在编译的时候可以通过命令编译：
+Linux内核模块可以通过如下命令进行编译:
+
 ```bash
 make -C 内核源码绝对路径 M=模块源码文件所在的绝对路径 modules  
 
@@ -212,8 +213,17 @@ MAKE := make CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64
 endif
 
 # Kernel modules
-MOD_SRCS:=hello.c
-obj-m += $(MOD_SRCS:.c=.o)
+
+MOD_SRCS:=hc_hello.c
+#指定驱动模块的名字
+# 注意：驱动模块的名字 千万 不能和本文件夹内的任何源文件同名！
+MOD_NAME := hello
+
+#$(MOD_NAME)-objs := 指定驱动模块的所有依赖文件
+$(MOD_NAME)-objs := $(MOD_SRCS:.c=.o)
+
+#最终由$(MOD_NAME)-objs链接生成$(MOD_NAME).o ，再生成$(MOD_NAME).ko
+obj-m += $(MOD_NAME).o
 
 # Specify flags for the module compilation.
 # EXTRA_CFLAGS = -g -O0
@@ -229,4 +239,3 @@ help:
 该Makefile文件应该与源代码hello.c位于同一目录，开启其中的EXTRA_CFLAGS=-g-O0，可以得到包含调试信息的hello.ko模块.
 
 >**`内核用EXPORT_SYMBOL_GPL（）导出的符号是不可以被非GPL模块引用的`**。
-
