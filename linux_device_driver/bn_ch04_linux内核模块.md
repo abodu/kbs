@@ -198,7 +198,7 @@ make -C 内核源码绝对路径 M=模块源码文件所在的绝对路径 modul
 
 因此有如下的 编译模块所需的 Makefile 文件模板：
 
-```makefile
+```Makefile
 KVERS := $(shell uname -r)
 #若定义了HC_KSD变量, 则以HC_KSD的取值替换默认的linux内核代码路径(/lib/modules/$(KVERS)/build)
 KSRCDIR = /lib/modules/$(KVERS)/build
