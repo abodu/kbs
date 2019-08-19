@@ -1,6 +1,6 @@
 ## 一、WiFi相关基础概念
 
-### 1、什么是`Wi-Fi `
+### 1、什么是 `Wi-Fi`
 
 我们看一下百度百科是如何定义的：
 
@@ -44,8 +44,8 @@ IEEE802协议有点大，下面只介绍其中一些概念：
 
 Ethenet 和 WiFi 采用的协议都属于IEEE 802协议集。其中，
 
-- Ethenet 以`802.3协议`做为其网络层以下的协议；
-- 而 WiFi 以 `802.11协议`做为其网络层以下的协议。
+* Ethenet 以`802.3协议`做为其网络层以下的协议；
+* 而 WiFi 以 `802.11协议`做为其网络层以下的协议。
 
 无论是有线网络，还是无线网络，其网络层以上的部分，基本一样。
 
@@ -58,19 +58,17 @@ IEEE802.11协议族成员如下：
 
  ![img](assets/20160409104536286.png)
 
-
-
 802.11基本规格涵盖了802.11 MAC 以及两种物理层(physical layer)：
 
-- 一是`跳频展频(frequency-hopping spread-spectrum，简称FHSS)`物理层，
-- 另一是`直接序列展频(direct-sequence spread-spectrum，简称DSSS)`物理层。
+* 一是`跳频展频(frequency-hopping spread-spectrum，简称FHSS)`物理层，
+* 另一是`直接序列展频(direct-sequence spread-spectrum，简称DSSS)`物理层。
 
 `802.11a` 所规范的物理层，主要是以`正交分频多工(orthogonal frequency division multiplexing，简称OFDM)`技术为基础.
 
 802.11将PHY进一步划分为两个组成元件：
 
-- 一是物理层`收敛程序(Physical Layer ConvergenceProcedure，简称PLCP)--` 负责将MAC帧对映到传输介质
-- 另一是`实际搭配介质Physical Medium Dependent，简称PMD)--`负责传送这些帧。
+* 一是物理层`收敛程序(Physical Layer ConvergenceProcedure，简称PLCP)--` 负责将MAC帧对映到传输介质
+* 另一是`实际搭配介质Physical Medium Dependent，简称PMD)--`负责传送这些帧。
 
 ### 2、802.11b
 
@@ -86,22 +84,19 @@ IEEE802.11b是所有无线局域网标准中最著名，也是普及最广的标
 
  ![img](assets/20160409105245468.png)
 
-- `工作站(Station) --`  具有无线网络接入功能的电子设备(笔记本，手持设备等).
-
-- `基站(Access Point) --` 802.11网络所使用的帧必须经过转换才能被传到其它不同类型的网络，具有无线至有线桥接功能的设备称为基站(Access Point,AP).此外基站还有其它功能.
-
-- `无线介质(Wireless Medium) --`802.11标准以无线介质(Wireless medium)在工作站之间传递帧.其所定义的物理层不只一种.
-
-- `传输系统(Distribution System) --`传输系统是基站间转送帧的骨干网络(`backbone network`)。当几部基站串连以覆盖较大区域时，彼此之间必须相互通信，才能够掌握移动式工作站的行踪。而传输系统(distribution system )属于802.11的逻辑元件，负责将帧(frame)转送至目的地。
+* `工作站(Station) --`  具有无线网络接入功能的电子设备(笔记本，手持设备等).
+* `基站(Access Point) --` 802.11网络所使用的帧必须经过转换才能被传到其它不同类型的网络，具有无线至有线桥接功能的设备称为基站(Access Point,AP).此外基站还有其它功能.
+* `无线介质(Wireless Medium) --`802.11标准以无线介质(Wireless medium)在工作站之间传递帧.其所定义的物理层不只一种.
+* `传输系统(Distribution System) --`传输系统是基站间转送帧的骨干网络(`backbone network`)。当几部基站串连以覆盖较大区域时，彼此之间必须相互通信，才能够掌握移动式工作站的行踪。而传输系统(distribution system )属于802.11的逻辑元件，负责将帧(frame)转送至目的地。
 
   > 大多数商用产品，是以`桥接引擎(bridging engine)`和`传输系统介质(distribution system medium)`共同组成传输系统.
 
-### 4、802.11 工作方式     
+### 4、802.11 工作方式
 
 802.11定义了两种类型的设备：
 
-- 一种是`无线站 -- ` 通常是通过一台PC机器加上一块无线网络接口卡构成的，
-- 另一个称为`无线接入点(Access Point, AP) --` 它的作用是提供无线和有线网络之间的桥接。
+* 一种是`无线站 --` 通常是通过一台PC机器加上一块无线网络接口卡构成的，
+* 另一个称为`无线接入点(Access Point, AP) --` 它的作用是提供无线和有线网络之间的桥接。
 
 一个无线接入点通常由`一个无线输出口`和`一个有线的网络接口(802.3接口)`构成，`桥接软件符合802.1d桥接协议`。
 
@@ -136,7 +131,7 @@ WiFi总共有14个信道，如下图所示：
 
 ### 2、SSID和BSSID
 
-- `基本服务集(BSS -- Basic Service Set)`
+* `基本服务集(BSS -- Basic Service Set)`
 
   基本服务集是802.11 LAN的基本组成模块。能互相进行无线通信的STA可以组成一个BSS(Basic Service Set) 。如果一个站移出BSS的覆盖范围，它将不能再与BSS的其它成员通信。
 
@@ -146,11 +141,11 @@ WiFi总共有14个信道，如下图所示：
 
    ![img](assets/53fdba9b9467c.png)
 
-- `扩展服务集(ESS -- Extend Service Set)`
+* `扩展服务集(ESS -- Extend Service Set)`
 
   多个BSS可以构成一个扩展网络，称为扩展服务集(ESS)网络，一个ESS网络内部的STA可以互相通信，是采用相同的SSID的多个BSS形成的更大规模的虚拟BSS。连接BSS的组件称为分布式系统(Distribution System，DS)。
 
-- `服务集的标识SSID -- Service Set Identifier` 
+* `服务集的标识SSID -- Service Set Identifier`
 
   > 在同一ESS内的所有STA和AP必须具有相同的SSID，否则无法进行通信
 
@@ -172,8 +167,6 @@ STA(工作站)启动初始化、开始正式使用AP传送数据帧前，要经�
 
  ![img](assets/20160409111404453.png)
 
-
-
 ### 4、WiFi - 组成结构
 
 一般架设无线网络的基本配备就是`无线网卡`及`一台AP`，如此便能以无线的模式，配合既有的有线架构来分享网络资源，架设费用和复杂程度远远低于传统的有线网络。
@@ -182,4 +175,8 @@ STA(工作站)启动初始化、开始正式使用AP传送数据帧前，要经�
 
 AP为`Access Point`简称，一般翻译为“`无线访问接入点`”，或“`桥接器`”。它主要在`媒体存取控制层MAC`中扮演无线工作站与有线局域网络的桥梁。
 
-有了AP，就像一般有线网络的Hub一般，无线工作站可以快速且轻易地与网络相连。特别是对于宽带的使用，无线保真更显优势，有线宽带网络(ADSL、小区LAN等)到户后，连接到一个AP，然后在电脑中安装一块无线网卡即可。普通的家庭有一个AP已经足够，甚至用户的邻里得到授权后，则无需增加端口，也能以共享的方式上网。
+有了AP，就像一般有线网络的Hub一般，无线工作站可以快速且轻易地与网络相连。
+
+特别是对于宽带的使用，无线保真更显优势，有线宽带网络(ADSL、小区LAN等)到户后，连接到一个AP，然后在电脑中安装一块无线网卡即可。
+
+普通的家庭有一个AP已经足够，甚至用户的邻里得到授权后，则无需增加端口，也能以共享的方式上网。
