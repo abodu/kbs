@@ -165,13 +165,13 @@ bootrom是各个SoC厂家根据自身情况编写的，目前的SoC一般都具�
 
 ### 3.3.3 Linux内核在`x86` 平台引导
 
-在 X86 PC 上有一个从 `BIOS(基本输入/输出系统)`转移到 Bootloader 的过程，而嵌入式系统往往复位后就直接运行 Bootloader。 
+在 X86 PC 上有一个从 `BIOS(基本输入/输出系统)`转移到 Bootloader 的过程，而嵌入式系统往往复位后就直接运行 Bootloader。
 
  ![1566529149024](assets/1566529149024.png)
 
-上图为 X86 PC 上从上电/复位到运行 Linux 用户空间初始进程的流程。在进入与 Linux相关代码之间，会经历如下阶段。 
+上图为 X86 PC 上从上电/复位到运行 Linux 用户空间初始进程的流程。在进入与 Linux相关代码之间，会经历如下阶段。
 
-`(1)` **当系统上电或复位时，CPU 会将 PC 指针赋值为一个特定的地址 0xFFFF0 并执行该地址处的指令**。在 PC 机中，该地址位于 BIOS 中，它保存在主板上的 ROM 或 Flash 中。 
+`(1)` **当系统上电或复位时，CPU 会将 PC 指针赋值为一个特定的地址 0xFFFF0 并执行该地址处的指令**。在 PC 机中，该地址位于 BIOS 中，它保存在主板上的 ROM 或 Flash 中。
 
 `(2)`  **BIOS 运行时按照 CMOS 的设置定义的启动设备顺序来搜索处于活动状态并且可以引导的设备**。若从硬盘启动，BIOS 会将硬盘 MBR（主引导记录）中的内容加载到 RAM。当 MBR 被加载到 RAM中之后，BIOS 就会将控制权交给 MBR。
 
@@ -189,21 +189,27 @@ bootrom是各个SoC厂家根据自身情况编写的，目前的SoC一般都具�
 
 2. 能将 U 盘、磁盘、光盘、NOR/NAND Flash、ROM、SD 卡等存储介质，甚或网口、串口中的操作系统加载到 RAM 并把控制权交给操作系统源代码执行。
 
-完成上述功能的 Bootloader 的实现方式非常多样化，甚至本身也可以是一个简化版的操作系统。著名的 Linux Bootloader 包括应用于 PC 的 LILO 和 GRUB，应用于嵌入式系统的 U-Boot、RedBoot 等。 
+完成上述功能的 Bootloader 的实现方式非常多样化，甚至本身也可以是一个简化版的操作系统。著名的 Linux Bootloader 包括应用于 PC 的 LILO 和 GRUB，应用于嵌入式系统的 U-Boot、RedBoot 等。
 
 我们有必要对上述流程的第 5 个阶段进行更详细的分析，它完成`启动内核并运行用户空间的init 进程`。
 
-当内核映像被加载到 RAM 之后，Bootloader 的控制权被释放，内核阶段就开始了。内核映像并不是完全可直接执行的目标代码，而是一个压缩过的 zImage（小内核）或 bzImage（大内核，bzImage 中的 b 是“big”的意思）。实际上，映像中包含未被压缩的部分，这部分中包含解压缩程序，解压缩程序会解压映像中被压缩的部分。zImage 和 bzImage 都是用 gzip 压缩的，它们不仅是一个压缩文件，而且在这两个文件的开头部分内嵌有 gzip 解压缩代码。 
+当内核映像被加载到 RAM 之后，Bootloader 的控制权被释放，内核阶段就开始了。内核映像并不是完全可直接执行的目标代码，而是一个压缩过的 zImage（小内核）或 bzImage（大内核，bzImage 中的 b 是“big”的意思）。
+
+实际上，映像中包含未被压缩的部分，这部分中包含解压缩程序，解压缩程序会解压映像中被压缩的部分。zImage 和 bzImage 都是用 gzip 压缩的，它们不仅是一个压缩文件，而且在这两个文件的开头部分内嵌有 gzip 解压缩代码。
 
  ![1566540755339](assets/1566540755339.png)
 
-当 bzImage（用于 i386 映像）被调用时，它从/arch/i386/boot/head.S 的 start 汇编例程开始执行。这个程序执行一些基本的硬件设置，并调用/arch/i386/boot/compressed/head.S 中的startup_32 例程。startup_32 程序设置一些基本的运行环境（如堆栈）后，清除 BSS 段，调用/arch/i386/boot/compressed/misc.c 中的 decompress_kernel() C 函数解压内核。内核被解压到内存中之后，会再调用/arch/i386/kernel/head.S 文件中的 startup_32 例程，这个新的 startup_32 例程（称为清除程序或进程 0）会初始化页表，并启用内存分页机制，接着为任何可选的浮点单元（FPU）检测CPU 的类型，并将其存储起来供以后使用。这些都做完之后，/init/main.c 中的 start_kernel()函数被调用，进入与体系结构无关的 Linux 内核部分。 
+当 bzImage（用于 i386 映像）被调用时，它从/arch/i386/boot/head.S 的 start 汇编例程开始执行。
 
-start_kernel()会调用一系列初始化函数来设置中断，执行进一步的内存配置。之后，/arch/i386/kernel/process.c 中 kernel_thread()被调用以启动第一个核心线程，该线程执行 init()函数，而原执行序列会调用 cpu_idle()等待调度。
+这个程序执行一些基本的硬件设置，并调用/arch/i386/boot/compressed/head.S 中的startup_32 例程。
+
+startup_32 程序设置一些基本的运行环境（如堆栈）后，清除 BSS 段，调用/arch/i386/boot/compressed/misc.c 中的 decompress_kernel() C 函数解压内核。
+
+内核被解压到内存中之后，会再调用/arch/i386/kernel/head.S 文件中的 startup_32 例程，这个新的 startup_32 例程（称为清除程序或进程 0）会初始化页表，并启用内存分页机制，接着为任何可选的浮点单元（FPU）检测CPU 的类型，并将其存储起来供以后使用。这些都做完之后，/init/main.c 中的 start_kernel()函数被调用，进入与体系结构无关的 Linux 内核部分。start_kernel()会调用一系列初始化函数来设置中断，执行进一步的内存配置。之后，/arch/i386/kernel/process.c 中 kernel_thread()被调用以启动第一个核心线程，该线程执行 init()函数，而原执行序列会调用 cpu_idle()等待调度。
 
 作为核心线程的 init()函数完成外设及其驱动程序的加载和初始化，挂接根文件系统。init()打开/dev/console 设备，重定向 stdin、stdout 和 stderr 到控制台。之后，它搜索文件系统中的 init程序（也可以由“init=”命令行参数指定 init 程序），并使用 execve()系统调用执行 init 程序。搜索 init 程序的顺序为：/sbin/init、/etc/init、/bin/init 和/bin/sh。在嵌入式系统中，多数情况下，可以给内核传入一个简单的 shell 脚本来启动必需的嵌入式应用程序。
 
-至此，漫长的 Linux 内核引导和启动过程就此结束，而 init()对应的这个由 start_kernel()创建的第一个线程也进入用户模式。 
+至此，漫长的 Linux 内核引导和启动过程就此结束，而 init()对应的这个由 start_kernel()创建的第一个线程也进入用户模式。
 
 ## 3.4 Linux下C编程特点
 
@@ -436,4 +442,3 @@ return ret;
 ```
 
 这种将goto用于错误处理的用法实在是简单而高效，只需保证在错误处理时注销、资源释放等，与正常的注册、资源申请顺序相反。
-
