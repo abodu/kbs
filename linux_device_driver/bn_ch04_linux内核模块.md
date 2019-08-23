@@ -57,13 +57,13 @@ module_init(initialization_function);
 
 在Linux内核编程过程中，可以使用 `request_module(const char*fmt，…)` 函数灵活地加载其他内核模块。
 
-在Linux中，所有标识为 `__init` 的函数如果直接编译进入内核，成为内核镜像的一部分，在连接的时候都会放在.init.text这个区段内。
+在Linux中，所有标识为 `__init` 的函数如果直接编译进入内核，成为内核镜像的一部分，在连接的时候都会放在`.init.text`这个区段内。
 
 ```c
 #define __init __attribute__((__section__(".init.text")))
 ```
 
-所有的 `__init` 函数在区段.initcall.init中还保存了一份函数指针，在初始化时内核会通过这些函数指针调用这些`__init` 函数，并在初始化完成后，释放init区段（包括.init.text、.initcall.init等）的内存。
+此外，所有的 `__init` 函数在区段`.initcall.init`中还保存了一份函数指针，在初始化时内核会通过这些函数指针调用这些`__init` 函数，并在初始化完成后，释放init区段（包括.init.text、.initcall.init等）的内存。
 
 除了函数以外，数据也可以被定义为 `__initdata`，对于只是初始化阶段需要的数据，内核在初始化完后，也可以释放它们占用的内存。
 
@@ -72,7 +72,7 @@ module_init(initialization_function);
 Linux内核模块卸载函数一般以 `__exit` 标识声明，典型的模块卸载函数的形式如代码：
 
 ```c
-static int __exit cleanup_function(void)
+static void __exit cleanup_function(void)
 {
     /* 释放代码 */
 }
@@ -81,13 +81,35 @@ module_exit(cleanup_function);
 
 模块卸载函数在模块卸载的时候执行，而不返回任何值，且必须以“`module_exit（函数名）`”的形式来指定。
 
-> 通常来说，模块卸载函数要完成与模块加载函数相反的功能。
+通常来说，模块卸载函数要完成与模块加载函数相反的功能。
+
+- 若模块加载函数注册了 XXX，则模块卸载函数应该注销 XXX。
+- 若模块加载函数动态申请了内存，则模块卸载函数应释放该内存。
+- 若模块加载函数申请了硬件资源（中断、DMA 通道、I/O 端口和 I/O 内存等）的占用，则模块卸载函数应释放这些硬件资源。
+-  若模块加载函数开启了硬件，则卸载函数中一般要关闭之。
 
 除了函数以外，只是退出阶段采用的数据也可以用 `__exitdata` 来形容。
 
+实际上，`__init`、`__initdata`、`__exitdata` 和 `__exit` 都是宏，其定义分别为： 
+
+```c
+#define __init __attribute__((__section__(".init.text")))
+
+#ifdef MODULE
+#define __exit __attribute__((__section__(".exit.text")))
+#else
+#define __exit __attribute_used__attribute_((__section__(".exit.text")))
+#endif
+
+#define __initdata __attribute__((__section__(".init.data")))
+#define __exitdata __attribute__((__section__(".exit.data")))
+```
+
 ## 4.5 模块参数
 
-我们可以用“`module_param（参数名，参数类型，参数读/写权限）`”为模块定义一个参数，例如下列代码定义了1个整型参数和1个字符指针参数：
+我们可以用“`module_param（参数名，参数类型，参数读/写权限）`”为模块定义一个参数。
+
+例如下列代码定义了1个整型参数和1个字符指针参数：
 
 ```c
 static char *book_name = "dissecting Linux Device Driver";
@@ -96,7 +118,7 @@ static int book_num = 4000;
 module_param(book_num, int, S_IRUGO);
 ```
 
-在装载内核模块时，用户可以向模块传递参数，形式为“`insmode（或modprobe）模块名参数名=参数值`”。如果不传递，参数将使用模块内定义的缺省值。
+在装载内核模块时，用户可以向模块传递参数，形式为“`insmode（或modprobe）模块名 参数名=参数值`”。如果不传递，参数将使用模块内定义的缺省值。
 
 > 如果模块被内置，就无法insmod了，但是 `bootloader`  可以通过在bootargs里设置“`模块名.参数名=值`”的形式给该内置的模块传递参数。
 
@@ -104,7 +126,7 @@ module_param(book_num, int, S_IRUGO);
 
 除此之外，模块也可以拥有参数数组，形式为“`module_param_array（数组名，数组类型，数组长，参数读/写权限）`” 。
 
-模块被加载后，在 `/sys/module/` 目录下将出现以此模块名命名的目录。
+模块被加载后，在 `/sys/module/` 目录下将出现以此模块名命名的目录。当“参数读/写权限”为 0时，表示此参数不存在 sysfs 文件系统下对应的文件节点，如果此模块存在“参数读/写权限”不为 0的命令行参数，在此模块的目录下还将出现 parameters 目录，包含一系列以参数名命名的文件节点，这些文件的权限值就是传入 module_param()的“参数读/写权限”，而文件的内容为参数的值。 
 
 ## 4.6 导出符号
 
@@ -234,4 +256,6 @@ help:
 
 该Makefile文件应该与源代码hello.c位于同一目录，开启其中的EXTRA_CFLAGS=-g-O0，可以得到包含调试信息的hello.ko模块.
 
->**`内核用EXPORT_SYMBOL_GPL（）导出的符号是不可以被非GPL模块引用的`**。
+**`内核用EXPORT_SYMBOL_GPL（）导出的符号是不可以被非GPL模块引用的`**。
+
+是一般而言，产品在启动过程中应该加载模块，在嵌入式产品 Linux 的启动过程中，加载企业自己的模块的最简单的方法是修改启动过程的 rc 脚本，增加 insmod /.../xxx.ko 这样的命令。用 busybox 做出的文件系统，通常修改 etc/init.d/rcS 文件。 
