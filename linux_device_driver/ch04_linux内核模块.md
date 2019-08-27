@@ -86,11 +86,11 @@ module_exit(cleanup_function);
 - 若模块加载函数注册了 XXX，则模块卸载函数应该注销 XXX。
 - 若模块加载函数动态申请了内存，则模块卸载函数应释放该内存。
 - 若模块加载函数申请了硬件资源（中断、DMA 通道、I/O 端口和 I/O 内存等）的占用，则模块卸载函数应释放这些硬件资源。
--  若模块加载函数开启了硬件，则卸载函数中一般要关闭之。
+- 若模块加载函数开启了硬件，则卸载函数中一般要关闭之。
 
 除了函数以外，只是退出阶段采用的数据也可以用 `__exitdata` 来形容。
 
-实际上，`__init`、`__initdata`、`__exitdata` 和 `__exit` 都是宏，其定义分别为： 
+实际上，`__init`、`__initdata`、`__exitdata` 和 `__exit` 都是宏，其定义分别为：
 
 ```c
 #define __init __attribute__((__section__(".init.text")))
@@ -126,7 +126,7 @@ module_param(book_num, int, S_IRUGO);
 
 除此之外，模块也可以拥有参数数组，形式为“`module_param_array（数组名，数组类型，数组长，参数读/写权限）`” 。
 
-模块被加载后，在 `/sys/module/` 目录下将出现以此模块名命名的目录。当“参数读/写权限”为 0时，表示此参数不存在 sysfs 文件系统下对应的文件节点，如果此模块存在“参数读/写权限”不为 0的命令行参数，在此模块的目录下还将出现 parameters 目录，包含一系列以参数名命名的文件节点，这些文件的权限值就是传入 module_param()的“参数读/写权限”，而文件的内容为参数的值。 
+模块被加载后，在 `/sys/module/` 目录下将出现以此模块名命名的目录。当“参数读/写权限”为 0时，表示此参数不存在 sysfs 文件系统下对应的文件节点，如果此模块存在“参数读/写权限”不为 0的命令行参数，在此模块的目录下还将出现 parameters 目录，包含一系列以参数名命名的文件节点，这些文件的权限值就是传入 module_param()的“参数读/写权限”，而文件的内容为参数的值。
 
 ## 4.6 导出符号
 
@@ -229,8 +229,8 @@ KSRCDIR := $(HC_KSD)
 endif
 
 MAKE = make #代码默认不进行交叉编译
-#若定义了HC_CTP变量, 则使用【aarch64-linux-gnu-】交叉编译工具链交叉编译到arm64上
-ifdef HC_CTP
+#若定义了HC_CC变量, 则使用【aarch64-linux-gnu-】交叉编译工具链交叉编译到arm64上
+ifdef HC_CC
 MAKE := make CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64
 endif
 
@@ -251,12 +251,11 @@ build: modules
 modules clean:
 	$(MAKE) -C $(KSRCDIR) M=$(CURDIR) $@
 help:
-	@echo -e '\n[HC_KSD=/path/to/kernel/srcdir] [HC_CTP=1] make [{build|clean}]\n'
+	@echo -e '\n[HC_KSD=/path/to/kernel/srcdir HC_CC=1] make\n'
 ```
 
 该Makefile文件应该与源代码hello.c位于同一目录，开启其中的EXTRA_CFLAGS=-g-O0，可以得到包含调试信息的hello.ko模块.
 
 **`内核用EXPORT_SYMBOL_GPL（）导出的符号是不可以被非GPL模块引用的`**。
 
-是一般而言，产品在启动过程中应该加载模块，在嵌入式产品 Linux 的启动过程中，加载企业自己的模块的最简单的方法是修改启动过程的 rc 脚本，增加 insmod /.../xxx.ko 这样的命令。用 busybox 做出的文件系统，通常修改 etc/init.d/rcS 文件。 
-
+是一般而言，产品在启动过程中应该加载模块，在嵌入式产品 Linux 的启动过程中，加载企业自己的模块的最简单的方法是修改启动过程的 rc 脚本，增加 insmod /.../xxx.ko 这样的命令。用 busybox 做出的文件系统，通常修改 etc/init.d/rcS 文件。
