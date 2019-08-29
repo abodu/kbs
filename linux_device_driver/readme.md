@@ -1,6 +1,3 @@
-<head>
-<title> Linux设备驱动开发  </title>
-</head>
 
 [第01章 驱动开发概述](ch01_驱动开发概述.md)
 
